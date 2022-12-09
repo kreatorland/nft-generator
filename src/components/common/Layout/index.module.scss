@@ -1,0 +1,13 @@
+@import "../../../../styles/variables.scss";
+
+.layout {
+  display: grid;
+  position: relative;
+  padding: 0px 40px;
+  place-content: center;
+  grid-template-columns: minmax(300px, $max-width);
+}
+
+.dullBackground {
+  background-color: #f4f5f9;
+}

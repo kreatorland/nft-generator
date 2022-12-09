@@ -1,0 +1,99 @@
+@import "../../../styles/variables.scss";
+
+.container {
+  width: 63%;
+
+  &__top {
+    display: flex;
+    justify-content: space-between;
+    &__upload {
+      width: 64%;
+      height: 300px;
+      background-color: #fff;
+      border: 1px dashed #000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+
+      &__target {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        width: 100% !important;
+        height: 100%;
+      }
+
+      &__title {
+        font-size: 15px;
+        font-weight: 300;
+        padding: 0px 20px;
+        text-align: center;
+      }
+
+      &__input {
+        visibility: hidden;
+      }
+    }
+    &__preview {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      width: 30%;
+
+      &__image {
+        width: 100%;
+        border: 1px dashed #000;
+        min-height: 80%;
+      }
+
+      &__button {
+        display: inline-block;
+        color: #fff;
+        padding: 8px;
+        margin-bottom: 10px;
+        font-size: 13px;
+        font-weight: 500;
+        background-color: $primary-color;
+        border-radius: 5px;
+        cursor: pointer;
+      }
+
+      &__title {
+        padding: 10px 20px;
+        font-size: 18px;
+        font-weight: 500;
+        padding-bottom: 10px;
+      }
+    }
+  }
+
+  &__bottom {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    grid-gap: 20px;
+    margin-top: 20px;
+  }
+}
+
+@media (max-width: $media-max-width) {
+  .container {
+    width: 100%;
+    margin-top: 20px;
+    &__top {
+      flex-direction: column;
+      align-items: center;
+      &__upload {
+        width: 90%;
+        margin-bottom: 20px;
+        &__target {
+          width: 90%;
+        }
+      }
+      &__preview {
+        width: 90%;
+      }
+    }
+  }
+}

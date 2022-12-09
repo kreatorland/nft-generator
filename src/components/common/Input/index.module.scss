@@ -1,0 +1,20 @@
+@import "../../../../styles/variables.scss";
+
+.container {
+  display: flex;
+  flex-direction: column;
+
+  &__label {
+    font-size: 20px;
+    font-weight: 500;
+    padding-bottom: 12px;
+  }
+
+  &__input {
+    font-size: 18px;
+    padding: 8px 10px;
+    margin-bottom: 30px;
+    background-color: #f4f5f9;
+    border: 1px solid #dfe1e6;
+  }
+}

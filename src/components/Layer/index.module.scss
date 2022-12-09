@@ -1,0 +1,51 @@
+@import "../../../styles/variables.scss";
+
+.container {
+  padding: 5px;
+  margin-bottom: 20px;
+  background-color: #fff;
+  position: relative;
+
+  &__delete {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background-color: #fff;
+    border: 1px solid #000;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+
+    img {
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+    }
+  }
+
+  &__image {
+    width: 100%;
+    object-fit: cover;
+  }
+
+  &__name {
+    font-size: 17px;
+    font-weight: 500;
+    margin-bottom: 5px;
+  }
+
+  &__rarity {
+    font-size: 17px;
+    font-weight: 500;
+    margin-bottom: 7px;
+  }
+
+  &__slider {
+    width: 100%;
+  }
+  &__slider::-webkit-runnable-track {
+    background-color: #000;
+  }
+}
