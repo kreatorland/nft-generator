@@ -46,7 +46,7 @@ class Engine {
 
   async drawImage(imagePath, x, y) {    //: string ?: number ?: number
     const image = await loadImage(imagePath);
-    console.log("path are",x, y)
+    // console.log("path are",x, y)
     this.ctx.drawImage(image, x || 0, y || 0, this.canvas.width, this.canvas.height );
 
   }
@@ -58,7 +58,8 @@ class Engine {
      
     }
  
-    await this.saveFileToZip(`${fileName}.png`, "Collection");
+    return new Promise(resolve => this.canvas.toBlob(blob => resolve(blob)));
+    // await this.saveFileToZip(`${fileName}.png`, "Collection");
 
 
   }
@@ -76,17 +77,33 @@ class Engine {
     console.log(startTime);
 
     for(let i = 0 ; i<selectedImages.length; i ++) {
-      await this.generateNFT(selectedImages[i], `${i}`);
-      await this.generateMetaData(data, selectedImages[0], ipfsURI, i);
+      if (i %100 === 0)  console.log(i);
+      
+      let blob = await this.generateNFT(selectedImages[i], `${i}`);
+      let meta = await this.generateMetaData(data, selectedImages[0], ipfsURI, i);
+      this.jszip.file(
+        `NFTCollection/Collection/${i}.json`,
+        JSON.stringify(meta, null, 2)
+      );
+      this.jszip.file(
+        `NFTCollection/Collection/${i}.png`,
+        blob,
+      );
     }
 
 
     var endTime = new Date().getTime();
-    console.log(`Call to doSomething took ${endTime - startTime} milliseconds`);
+    console.log(`Call to doSomething took ${(endTime - startTime) / 60000} minutes`);
 
+    console.time("JS ZIPPING");
+    await this.jszip;
+    console.timeEnd("JS ZIPPING");
+
+    console.time("JS DOWNLOADING");
     this.jszip
       .generateAsync({ type: "blob" })
       .then((content) => {    //: any
+        console.timeEnd("JS DOWNLOADING");
         saveAs(content, "NFTCollection.zip");
       })
       .catch((err) => console.log(err));    //: any
@@ -126,10 +143,10 @@ class Engine {
     };
     
 
-    await this.jszip.file(
-      `NFTCollection/Collection/${index}.json`,
-      JSON.stringify(metadata)
-    );
+    // await this.jszip.file(
+    //   `NFTCollection/Collection/${index}.json`,
+    //   JSON.stringify(metadata)
+    // );
 
     return metadata;
   }
