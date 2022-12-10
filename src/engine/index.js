@@ -14,8 +14,11 @@ class Engine {
     this.preview = "";
     this.jszip = new JSZip();
 
-    this.canvas = createCanvas(size.width, size.height);
+    this.canvas = document.getElementById("working-canvas");
     this.ctx = this.canvas.getContext("2d");
+    this.ctx.imageSmoothingEnabled = true;
+    this.ctx.imageSmoothingQuality = "medium";
+    this.ctx.quality = "bilinear";
     this.arr = [];
   }
 
@@ -371,6 +374,4 @@ class Engine {
  
 }
 
-const engine = new Engine({ width: 374, height: 374 }, [], 1);
-
-export default engine;
+export default Engine;

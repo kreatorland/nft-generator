@@ -10,6 +10,7 @@ function Generator() {
   return (
     <nav>
       <Layout dullBackground>
+        <canvas id="working-canvas"/>
         <div className={styles.container}>
           <Data />
           <Layers />
