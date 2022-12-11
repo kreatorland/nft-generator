@@ -17,8 +17,8 @@ class Engine {
     this.canvas = document.getElementById("working-canvas");
     this.ctx = this.canvas.getContext("2d");
     this.ctx.imageSmoothingEnabled = true;
-    this.ctx.imageSmoothingQuality = "medium";
-    this.ctx.quality = "bilinear";
+    this.ctx.imageSmoothingQuality = "low";
+    this.ctx.quality = "fast";
     this.arr = [];
   }
 
@@ -43,25 +43,27 @@ class Engine {
     this.collectionSize = collectionSize;
   }
 
-  clearCanvas() {
-    this.ctx.clearRect(0, 0, this.size.width, this.size.height);
+  clearCanvas(ctx) {
+    (ctx ? ctx : this.ctx).clearRect(0, 0, this.size.width, this.size.height);
   }
 
-  async drawImage(imagePath, x, y) {    //: string ?: number ?: number
+  async drawImage(imagePath, x, y, ctx) {    //: string ?: number ?: number
     const image = await loadImage(imagePath);
     // console.log("path are",x, y)
-    this.ctx.drawImage(image, x || 0, y || 0, this.canvas.width, this.canvas.height );
+    (ctx ? ctx : this.ctx).drawImage(image, x || 0, y || 0, this.canvas.width, this.canvas.height );
 
   }
   async generateNFT(images, fileName) {   //: Array<Image>    : string
     const imgs = Array.isArray(images) ? images : [images];
-    this.clearCanvas();
+    const canvas = createCanvas(this.size.width, this.size.height);
+    const ctx = canvas.getContext("2d");
     for(let i = 0 ; i<imgs.length; i ++) {
-      await this.drawImage(imgs[i].path);
-     
+      await this.drawImage(imgs[i].path, 0, 0, ctx);
     }
- 
-    return new Promise(resolve => this.canvas.toBlob(blob => resolve(blob)));
+    
+    const blob = await new Promise(resolve => canvas.toBlob(blob => resolve(blob)));
+    this.clearCanvas(ctx);
+    return blob;
     // await this.saveFileToZip(`${fileName}.png`, "Collection");
 
 
@@ -80,27 +82,43 @@ class Engine {
     console.log(startTime);
 
     for(let i = 0 ; i<selectedImages.length; i ++) {
-      if (i %100 === 0)  console.log(i);
-      
-      let blob = await this.generateNFT(selectedImages[i], `${i}`);
-      let meta = await this.generateMetaData(data, selectedImages[0], ipfsURI, i);
+      let meta = await this.generateMetaData(data, selectedImages[i], ipfsURI, i);
       this.jszip.file(
         `NFTCollection/Collection/${i}.json`,
         JSON.stringify(meta, null, 2)
       );
-      this.jszip.file(
-        `NFTCollection/Collection/${i}.png`,
-        blob,
-      );
     }
 
+    let myData = [];
+
+    for(let i = 0; i < selectedImages.length; i++){
+      let BATCH_SIZE = 100;
+      if(i%BATCH_SIZE === 0){
+        const limit = BATCH_SIZE;
+        console.log(`Generating from ${i} to ${i+limit}`);
+        const arr = await Promise.all(
+          selectedImages.slice(i, i + limit).map(async (selectedImage, index) => {
+              const blob = await this.generateNFT(selectedImage);
+              return {
+                blob,
+                index: index + i,
+              }
+            })
+        );
+        myData.push(...arr);
+      }
+    }
+    console.time("JS ZIPPING");
+    await Promise.all(myData.map((myDataI) => 
+        this.jszip.file(
+          `NFTCollection/Collection/${myDataI.index}.png`,
+          myDataI.blob,
+        )
+      ))
+    console.timeEnd("JS ZIPPING");
 
     var endTime = new Date().getTime();
     console.log(`Call to doSomething took ${(endTime - startTime) / 60000} minutes`);
-
-    console.time("JS ZIPPING");
-    await this.jszip;
-    console.timeEnd("JS ZIPPING");
 
     console.time("JS DOWNLOADING");
     this.jszip
