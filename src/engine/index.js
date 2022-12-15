@@ -14,8 +14,11 @@ class Engine {
     this.preview = "";
     this.jszip = new JSZip();
 
-    this.canvas = createCanvas(size.width, size.height);
+    this.canvas = document.getElementById("working-canvas-0");
     this.ctx = this.canvas.getContext("2d");
+    this.ctx.imageSmoothingEnabled = true;
+    this.ctx.imageSmoothingQuality = "low";
+    this.ctx.quality = "fast";
     this.arr = [];
   }
 
@@ -40,25 +43,30 @@ class Engine {
     this.collectionSize = collectionSize;
   }
 
-  clearCanvas() {
-    this.ctx.clearRect(0, 0, this.size.width, this.size.height);
+  clearCanvas(ctx) {
+    (ctx ? ctx : this.ctx).clearRect(0, 0, this.size.width, this.size.height);
   }
 
-  async drawImage(imagePath, x, y) {    //: string ?: number ?: number
+  async drawImage(imagePath, x, y, ctx) {    //: string ?: number ?: number
     const image = await loadImage(imagePath);
-    console.log("path are",x, y)
-    this.ctx.drawImage(image, x || 0, y || 0, this.canvas.width, this.canvas.height );
+    // console.log("path are",x, y)
+    (ctx ? ctx : this.ctx).drawImage(image, x || 0, y || 0, this.canvas.width, this.canvas.height );
 
   }
   async generateNFT(images, fileName) {   //: Array<Image>    : string
     const imgs = Array.isArray(images) ? images : [images];
-    this.clearCanvas();
+    const canvas = document.getElementById(`working-canvas-${fileName}`);
+    canvas.width = this.size.width;
+    canvas.height = this.size.height;
+    const ctx = canvas.getContext("2d");
     for(let i = 0 ; i<imgs.length; i ++) {
-      await this.drawImage(imgs[i].path);
-     
+      await this.drawImage(imgs[i].path, 0, 0, ctx);
     }
- 
-    await this.saveFileToZip(`${fileName}.png`, "Collection");
+    
+    const blob = await new Promise(resolve => canvas.toBlob(blob => resolve(blob), 'image/jpeg', 0.5));
+    this.clearCanvas(ctx);
+    return blob;
+    // await this.saveFileToZip(`${fileName}.png`, "Collection");
 
 
   }
@@ -73,20 +81,52 @@ class Engine {
     );
     ///TODO
     var startTime = new Date().getTime();
-    console.log(startTime);
+    console.log(startTime.toString());
 
     for(let i = 0 ; i<selectedImages.length; i ++) {
-      await this.generateNFT(selectedImages[i], `${i}`);
-      await this.generateMetaData(data, selectedImages[0], ipfsURI, i);
+      let meta = await this.generateMetaData(data, selectedImages[i], ipfsURI, i);
+      this.jszip.file(
+        `NFTCollection/Collection/${i}.json`,
+        JSON.stringify(meta, null, 2)
+      );
     }
 
+    let myData = [];
+
+    for(let i = 0; i < selectedImages.length; i++){
+      let BATCH_SIZE = 100;
+      if(i%BATCH_SIZE === 0){
+        const limit = BATCH_SIZE;
+        console.log(`Generating from ${i} to ${i+limit}`);
+        const arr = await Promise.all(
+          selectedImages.slice(i, i + limit).map(async (selectedImage, index) => {
+              const blob = await this.generateNFT(selectedImage, index);
+              return {
+                blob,
+                index: index + i,
+              }
+            })
+        );
+        myData.push(...arr);
+      }
+    }
+    console.time("JS ZIPPING");
+    await Promise.all(myData.map((myDataI) => 
+        this.jszip.file(
+          `NFTCollection/Collection/${myDataI.index}.png`,
+          myDataI.blob,
+        )
+      ))
+    console.timeEnd("JS ZIPPING");
 
     var endTime = new Date().getTime();
-    console.log(`Call to doSomething took ${endTime - startTime} milliseconds`);
+    console.log(`Call to doSomething took ${(endTime - startTime) / 60000} minutes`);
 
+    console.time("JS DOWNLOADING");
     this.jszip
       .generateAsync({ type: "blob" })
       .then((content) => {    //: any
+        console.timeEnd("JS DOWNLOADING");
         saveAs(content, "NFTCollection.zip");
       })
       .catch((err) => console.log(err));    //: any
@@ -126,10 +166,10 @@ class Engine {
     };
     
 
-    await this.jszip.file(
-      `NFTCollection/Collection/${index}.json`,
-      JSON.stringify(metadata)
-    );
+    // await this.jszip.file(
+    //   `NFTCollection/Collection/${index}.json`,
+    //   JSON.stringify(metadata)
+    // );
 
     return metadata;
   }
@@ -354,6 +394,4 @@ class Engine {
  
 }
 
-const engine = new Engine({ width: 374, height: 374 }, [], 1);
-
-export default engine;
+export default Engine;

@@ -6,6 +6,7 @@ import { TypedUseSelectorHook, useSelector } from "react-redux";
 import Button from "../common/Button";
 import Input from "../common/Input";
 import styles from "./index.module.scss";
+import Engine from "../../engine";
 // import { Performance } from "perf_hooks";
 // ss
 const typedUseSelectorHook = useSelector;   //: TypedUseSelectorHook<InitialState>
@@ -17,12 +18,18 @@ function Generate() {
   const [ipfsURI, setIpfsURI] = React.useState("");   //<string>
   const data = typedUseSelectorHook((state) => state.data);
   const layers = typedUseSelectorHook((state) => state.layers);
+  const [engine, setEngine] = React.useState(null);
 
   useEffect(() => {
-    const maxCollectionSize =
-      engine.layersCartesianProduct(layers.items)?.length || 0;
-    setMaxCollectionSize(maxCollectionSize);
-  }, [layers.items]);
+    setEngine(new Engine({ width: 374, height: 374 }, [], 1));
+  }, []);
+
+  useEffect(() => {
+    if(engine) {
+      const maxCollectionSize = engine.layersCartesianProduct(layers.items)?.length || 0;
+      setMaxCollectionSize(maxCollectionSize);
+    }
+  }, [layers.items, engine]);
 
   const onGenerate = () => {
     engine.setSize({ width: data?.width || 1000, height: data?.height || 1000 });
