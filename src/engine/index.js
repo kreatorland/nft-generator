@@ -14,7 +14,7 @@ class Engine {
     this.preview = "";
     this.jszip = new JSZip();
 
-    this.canvas = document.getElementById("working-canvas");
+    this.canvas = document.getElementById("working-canvas-0");
     this.ctx = this.canvas.getContext("2d");
     this.ctx.imageSmoothingEnabled = true;
     this.ctx.imageSmoothingQuality = "low";
@@ -55,13 +55,15 @@ class Engine {
   }
   async generateNFT(images, fileName) {   //: Array<Image>    : string
     const imgs = Array.isArray(images) ? images : [images];
-    const canvas = createCanvas(this.size.width, this.size.height);
+    const canvas = document.getElementById(`working-canvas-${fileName}`);
+    canvas.width = this.size.width;
+    canvas.height = this.size.height;
     const ctx = canvas.getContext("2d");
     for(let i = 0 ; i<imgs.length; i ++) {
       await this.drawImage(imgs[i].path, 0, 0, ctx);
     }
     
-    const blob = await new Promise(resolve => canvas.toBlob(blob => resolve(blob)));
+    const blob = await new Promise(resolve => canvas.toBlob(blob => resolve(blob), 'image/jpeg', 0.5));
     this.clearCanvas(ctx);
     return blob;
     // await this.saveFileToZip(`${fileName}.png`, "Collection");
@@ -79,7 +81,7 @@ class Engine {
     );
     ///TODO
     var startTime = new Date().getTime();
-    console.log(startTime);
+    console.log(startTime.toString());
 
     for(let i = 0 ; i<selectedImages.length; i ++) {
       let meta = await this.generateMetaData(data, selectedImages[i], ipfsURI, i);
@@ -98,7 +100,7 @@ class Engine {
         console.log(`Generating from ${i} to ${i+limit}`);
         const arr = await Promise.all(
           selectedImages.slice(i, i + limit).map(async (selectedImage, index) => {
-              const blob = await this.generateNFT(selectedImage);
+              const blob = await this.generateNFT(selectedImage, index);
               return {
                 blob,
                 index: index + i,
